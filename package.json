@@ -1,0 +1,55 @@
+{
+  "name": "bilibili-mcp-server",
+  "version": "1.0.0",
+  "description": "Bilibili MCP Server — B站 API 的 MCP 服务封装，支持评论管理、视频搜索、弹幕字幕获取、Cookie 自动刷新等",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "bilibili-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README_zh.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "npx tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "bilibili",
+    "mcp",
+    "model-context-protocol",
+    "bilibili-api",
+    "claude",
+    "cursor",
+    "ai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Iseenope/bilibili-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Iseenope/bilibili-mcp-server/issues"
+  },
+  "homepage": "https://github.com/Iseenope/bilibili-mcp-server#readme",
+  "author": "Iseenope",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "~5.7.2",
+    "vitest": "^4.1.10"
+  }
+}

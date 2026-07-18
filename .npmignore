@@ -1,0 +1,34 @@
+# 源代码（只用 dist/）
+src/
+tests/
+
+# 配置文件
+tsconfig.json
+vitest.config.ts
+.env.example
+
+# 文档（README 由 files 字段单独包含）
+docs/
+
+# Git 相关
+.git/
+.github/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 调试和日志
+*.log
+npm-debug.log*
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
