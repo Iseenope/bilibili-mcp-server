@@ -1,6 +1,6 @@
 {
   "name": "bilibili-mcp-server",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "description": "B站 MCP 服务 — 哔哩哔哩 API 的 Model Context Protocol 封装，提供视频搜索、弹幕、字幕、评论、直播、用户信息、专栏等 22 个工具",
   "type": "module",
   "main": "dist/index.js",
