@@ -518,11 +518,11 @@ export const biliApi = {
   async playUrl(params: {
     videoId: string;
     cid: number;
-    qn?: number; // 画质代码：80=1080P, 64=720P, 32=480P, 16=360P
-    fnval?: number; // 1=MP4, 16=DASH
+    qn?: number;
+    fnval?: number;
     fourk?: boolean;
   }): Promise<Record<string, unknown>> {
-    const body: Record<string, string> = {
+    const queryParams: Record<string, string> = {
       cid: String(params.cid),
       qn: String(params.qn || 80),
       fnval: String(params.fnval || 16),
@@ -531,11 +531,12 @@ export const biliApi = {
       high_quality: '1',
     };
     if (/^BV/gi.test(params.videoId)) {
-      body.bvid = params.videoId;
+      queryParams.bvid = params.videoId;
     } else {
-      body.aid = params.videoId;
+      queryParams.aid = params.videoId;
     }
-    return request('/x/player/playurl', { body, useWbi: true });
+    // playurl 端点必须用 GET + query params，B站拒绝 body
+    return request('/x/player/playurl', { params: queryParams, useWbi: true });
   },
 
   // ─── 发送弹幕 ─────────────────────────────────────────
