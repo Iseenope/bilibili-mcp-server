@@ -22,8 +22,8 @@
 | 🔑 登录 | `bilibili_login` 生成登录二维码、`bilibili_login_check` 轮询扫码状态 | 2 |
 | 🔄 系统 | `bilibili_refresh_cookie` Cookie 刷新 | 1 |
 
-**✓ 核心差异化优势：**
-- **Cookie 自动刷新** — 完整 6 步流程（检查→RSA→取csrf→刷新→确认→SSO），竞品全都不支持
+**✓ 核心优势：**
+- **Cookie 自动刷新** — 完整 6 步流程（检查→RSA→取csrf→刷新→确认→SSO）
 - **完整 WBI 签名** — 按官方规范实现，不依赖第三方库
 - **二维码扫码登录** — 无需手动从浏览器复制 Cookie
 - **自适应限流** — 遇到 -509 自动降速
@@ -176,7 +176,8 @@ src/
 │   ├── bilibili.ts    # B站 HTTP 客户端（自适应限流、智能重试）
 │   ├── wbi.ts         # WBI 签名模块（含缓存、代理绕过）
 │   ├── cookie.ts      # Cookie 刷新（6步完整流程）
-│   └── login.ts       # 二维码扫码登录
+│   ├── login.ts       # 二维码扫码登录
+│   └── danmaku.ts     # 弹幕 Protobuf 解析
 ├── tools/
 │   ├── comment.ts     # 评论工具 (3)
 │   ├── video.ts       # 视频/搜索工具 (7)
@@ -211,25 +212,10 @@ docker build -t bilibili-mcp-server .
 docker run --env-file .env bilibili-mcp-server
 ```
 
-## 为什么选择这个服务？
-
-| 特性 | 本项目 | 竞品 |
-|------|--------|------|
-| Cookie 自动刷新 | ✅ 6 步完整流程 | ❌ 全部不支持 |
-| WBI 签名 | ✅ 手动实现，规范 | ⚠️ 依赖 SDK 或缺失 |
-| 二维码扫码登录 | ✅ 支持 | ❌ 仅手动复制 |
-| 检测回复 | ✅ 状态持久化 | ❌ |
-| 自适应限流 | ✅ 遇 -509 自动降速 | ❌ |
-| 智能重试 | ✅ 仅网络错误 | ⚠️ 所有异常 |
-| 工具数量 | 22 个 | 4-27 个 |
-| 开发语言 | TypeScript (ESM) | 大部分是 Python |
-| 平台支持 | 所有 MCP 客户端 | 相同 |
-
 ## 许可证
 
 MIT
 
 ## 相关链接
 
-- [国家超算互联网](https://www.scnet.cn)
 - [MCP 协议](https://modelcontextprotocol.io)

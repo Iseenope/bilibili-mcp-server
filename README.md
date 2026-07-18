@@ -22,13 +22,13 @@ A Model Context Protocol (MCP) server for Bilibili (B站), enabling AI assistant
 | 🔑 Login | `bilibili_login`, `bilibili_login_check` | 2 |
 | 🔄 System | `bilibili_refresh_cookie` | 1 |
 
-**✓ Unique Differentiators:**
-- **Cookie Auto-Refresh** — Complete 6-step refresh flow (vs. competitors' manual refresh).
-- **Complete WBI Signature** — Handles Bilibili's anti-scraping mechanism with proper encoding.
-- **QR Code Login** — Two-step scan-and-confirm login flow.
-- **Adaptive Rate Limiting** — Auto-throttles on -509 (rate limit) errors.
-- **Smart Retry** — Only retries on network errors, never on programming bugs.
-- **Reply Detection** — Persistent state across restarts.
+**✓ Highlights:**
+- **Cookie Auto-Refresh** — Complete 6-step refresh flow (check → RSA → csrf → refresh → confirm → SSO)
+- **Full WBI Signature** — Manual implementation, no SDK dependency
+- **QR Code Login** — No manual cookie copying from browser
+- **Adaptive Rate Limiting** — Auto-throttles on -509 (rate limit) errors
+- **Smart Retry** — Only retries on network errors, never on programming bugs
+- **Reply Detection** — Persistent state across restarts
 
 ## Quick Start
 
@@ -176,6 +176,7 @@ src/
 │   ├── wbi.ts         # WBI signature (cached, noProxyFetch)
 │   ├── cookie.ts      # Cookie refresh (6-step flow, noProxyFetch)
 │   ├── login.ts       # QR code login (noProxyFetch)
+│   └── danmaku.ts     # Danmaku protobuf parser
 ├── tools/
 │   ├── comment.ts     # Comment tools (3)
 │   ├── video.ts       # Video/search tools (5+2)
@@ -206,25 +207,10 @@ npm run build
 npm test
 ```
 
-## Why This Server?
-
-| Feature | Us | Competitors |
-|---------|----|-------------|
-| Cookie Auto-Refresh | ✅ Complete 6-step | ❌ None |
-| WBI Signature | ✅ Manual, no SDK | ⚠️ Via SDK or absent |
-| QR Code Login | ✅ Scan-to-login | ❌ Cookie copy only |
-| Reply Detection | ✅ Persistent state | ❌ |
-| Rate Limiting | ✅ Adaptive (auto-throttle) | ❌ |
-| Smart Retry | ✅ Network errors only | ⚠️ All errors |
-| Tool Count | 22 | 4-27 |
-| Language | TypeScript (ESM) | Mostly Python |
-| Platform Support | All MCP clients | Same |
-
 ## License
 
 MIT
 
 ## Links
 
-- [National Supercomputing Internet (超算互联网)](https://www.scnet.cn)
 - [MCP Protocol](https://modelcontextprotocol.io)
