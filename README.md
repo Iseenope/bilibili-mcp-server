@@ -1,64 +1,66 @@
 # Bilibili MCP Server
 
-Model Context Protocol server for Bilibili. Provides video search, comments, danmaku, subtitles, user info, articles, QR login, and more. 22 tools total.
+[English](./README_en.md) | [中文](./README.md)
 
-## Tools
+B 站的 MCP 服务。提供视频搜索、评论管理、弹幕字幕、用户信息、动态专栏、扫码登录等功能，共 22 个工具。
 
-| Category | Tools | Count |
-|----------|-------|:-----:|
-| Comments | `bilibili_reply`, `bilibili_delete_comment`, `bilibili_like_comment` | 3 |
-| Search | `bilibili_search`, `bilibili_search_hot` | 2 |
-| Video | `bilibili_video_info`, `bilibili_video_comments`, `bilibili_video_subtitle`, `bilibili_video_danmaku`, `bilibili_hot` | 5 |
-| User | `bilibili_user_info`, `bilibili_user_videos`, `bilibili_user_favorites` | 3 |
-| Content | `bilibili_user_dynamics`, `bilibili_article_info`, `bilibili_user_articles` | 3 |
-| Message | `bilibili_detect_replies`, `bilibili_notifications` | 2 |
-| Live | `bilibili_live_info` | 1 |
-| Login | `bilibili_login`, `bilibili_login_check` | 2 |
-| System | `bilibili_refresh_cookie` | 1 |
+## 工具列表
 
-## Quick Start
+| 类别 | 工具 | 数量 |
+|:----:|------|:----:|
+| 评论 | `bilibili_reply`、`bilibili_delete_comment`、`bilibili_like_comment` | 3 |
+| 搜索 | `bilibili_search`、`bilibili_search_hot` | 2 |
+| 视频 | `bilibili_video_info`、`bilibili_video_comments`、`bilibili_video_subtitle`、`bilibili_video_danmaku`、`bilibili_hot` | 5 |
+| 用户 | `bilibili_user_info`、`bilibili_user_videos`、`bilibili_user_favorites` | 3 |
+| 内容 | `bilibili_user_dynamics`、`bilibili_article_info`、`bilibili_user_articles` | 3 |
+| 消息 | `bilibili_detect_replies`、`bilibili_notifications` | 2 |
+| 直播 | `bilibili_live_info` | 1 |
+| 登录 | `bilibili_login`、`bilibili_login_check` | 2 |
+| 系统 | `bilibili_refresh_cookie` | 1 |
 
-### Requirements
+## 快速开始
+
+### 环境要求
 
 - Node.js 22+
-- A Bilibili account (for authenticated operations)
+- B 站账号（用于需要登录的操作）
 
-### Installation
+### 安装
 
 ```bash
-# Run directly
+# 直接运行
 npx bilibili-mcp-server
 
-# Or install globally
+# 或全局安装
 npm install -g bilibili-mcp-server
 bilibili-mcp-server
 ```
 
-### Configuration
+### 配置
 
-Configure via environment variables or a `.env` file:
+支持环境变量或项目目录下的 `.env` 文件：
 
 ```bash
-# Required
-export BILIBILI_SESSDATA=your_sessdata
-export BILIBILI_BILI_JCT=your_bili_jct
-export BILIBILI_DEDE_USER_ID=your_uid
+# 必填 - 从浏览器开发者工具 → Application → Cookies → bilibili.com 获取
+export BILIBILI_SESSDATA=你的sessdata
+export BILIBILI_BILI_JCT=你的bili_jct
+export BILIBILI_DEDE_USER_ID=你的uid
 
-# Optional - Cookie auto-refresh
-# bilibili.com → F12 → Console:
+# 可选 - Cookie 自动刷新
+# 获取方式: bilibili.com → F12 → Console → 输入:
 #   console.log(localStorage.getItem('ac_time_value'))
-export BILIBILI_REFRESH_TOKEN=your_refresh_token
+export BILIBILI_REFRESH_TOKEN=你的refresh_token
 
-# Optional - Full cookie string (for trending searches)
+# 可选 - 完整 Cookie（热搜等功能需要）
 # export BILIBILI_FULL_COOKIE="buvid3=xxx; buvid4=xxx; _uuid=xxx; ..."
 
-# Optional
+# 可选
 export BILIBILI_AUTO_REFRESH=true
 export BILIBILI_COOKIE_FILE=/path/to/cookie.json
 export BILIBILI_DETECT_FILE=/path/to/detect.json
 ```
 
-### MCP Client Configuration
+### MCP 客户端配置
 
 ```json
 {
@@ -67,82 +69,84 @@ export BILIBILI_DETECT_FILE=/path/to/detect.json
       "command": "npx",
       "args": ["-y", "bilibili-mcp-server"],
       "env": {
-        "BILIBILI_SESSDATA": "your_sessdata",
-        "BILIBILI_BILI_JCT": "your_bili_jct",
-        "BILIBILI_DEDE_USER_ID": "your_uid"
+        "BILIBILI_SESSDATA": "你的sessdata",
+        "BILIBILI_BILI_JCT": "你的bili_jct",
+        "BILIBILI_DEDE_USER_ID": "你的uid"
       }
     }
   }
 }
 ```
 
-### QR Login
+### 扫码登录
 
-1. Call `bilibili_login` to get a QR code
-2. Scan with Bilibili mobile app
-3. Call `bilibili_login_check` to poll status
-4. Cookies are saved automatically on success
+不想手动复制 Cookie 的话，可以调扫码登录：
 
-## Tool Reference
+1. 调 `bilibili_login` 获取二维码
+2. 手机 B 站 App 扫码
+3. 调 `bilibili_login_check` 检测登录状态
+4. 登录成功自动保存 Cookie
 
-### Login & Authentication
+## 工具说明
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_login` | Generate QR code for login | - |
-| `bilibili_login_check` | Poll QR login status | `loginKey`, `maxRetries?` |
-| `bilibili_refresh_cookie` | Manually refresh cookies | - |
+### 登录与认证
 
-### Comment Management
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_login` | 生成扫码登录二维码 | - |
+| `bilibili_login_check` | 轮询扫码状态，登录成功自动保存 | `loginKey`, `maxRetries?` |
+| `bilibili_refresh_cookie` | 手动触发 Cookie 刷新 | - |
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_reply` | Post a comment or reply | `videoId`, `message`, `parentRpid?` |
-| `bilibili_delete_comment` | Delete your comment | `videoId`, `rpid` |
-| `bilibili_like_comment` | Like/unlike a comment | `videoId`, `rpid`, `action` |
+### 评论管理
 
-### Video & Search
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_reply` | 发布评论或回复 | `videoId`, `message`, `parentRpid?` |
+| `bilibili_delete_comment` | 删除自己的评论 | `videoId`, `rpid` |
+| `bilibili_like_comment` | 点赞/取消赞 | `videoId`, `rpid`, `action` |
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_search` | Search videos | `keyword`, `order?`, `page?`, `duration?` |
-| `bilibili_video_info` | Get video details | `videoId` |
-| `bilibili_video_comments` | Get video comments | `videoId`, `max?` |
-| `bilibili_video_subtitle` | Get subtitles | `videoId`, `lang?` |
-| `bilibili_video_danmaku` | Get danmaku | `videoId`, `segment?` |
-| `bilibili_hot` | Trending videos | `page?`, `max?` |
-| `bilibili_search_hot` | Trending search keywords | - |
+### 视频与搜索
 
-### User
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_search` | 搜索视频 | `keyword`, `order?`, `page?`, `duration?` |
+| `bilibili_video_info` | 视频详情 | `videoId` |
+| `bilibili_video_comments` | 获取评论列表 | `videoId`, `max?` |
+| `bilibili_video_subtitle` | 获取字幕 | `videoId`, `lang?` |
+| `bilibili_video_danmaku` | 获取弹幕 | `videoId`, `segment?` |
+| `bilibili_hot` | 热门视频 | `page?`, `max?` |
+| `bilibili_search_hot` | 热搜关键词 | - |
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_user_info` | Get user profile | `uid` |
-| `bilibili_user_videos` | Get user's video list | `uid`, `max?` |
-| `bilibili_user_favorites` | Get favorites/folders | `uid`, `folderId?`, `max?` |
+### 用户
 
-### Content (Dynamics & Articles)
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_user_info` | 用户信息 | `uid` |
+| `bilibili_user_videos` | UP 主视频列表 | `uid`, `max?` |
+| `bilibili_user_favorites` | 收藏夹 | `uid`, `folderId?`, `max?` |
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_user_dynamics` | Get user's dynamic feed | `uid`, `max?` |
-| `bilibili_article_info` | Get article details | `cvid` |
-| `bilibili_user_articles` | Get user's article list | `uid`, `max?` |
+### 动态与专栏
 
-### Notifications
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_user_dynamics` | UP 主最新动态 | `uid`, `max?` |
+| `bilibili_article_info` | 专栏文章详情 | `cvid` |
+| `bilibili_user_articles` | UP 主专栏列表 | `uid`, `max?` |
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_detect_replies` | Detect new replies | `max?` |
-| `bilibili_notifications` | View unread notifications | - |
+### 消息通知
 
-### Live Streaming
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_detect_replies` | 检测新回复 | `max?` |
+| `bilibili_notifications` | 查看未读通知 | - |
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `bilibili_live_info` | Query live room info | `uid` |
+### 直播
 
-## Architecture
+| 工具 | 功能 | 参数 |
+|------|------|------|
+| `bilibili_live_info` | 查询直播间信息 | `uid` |
+
+## 项目结构
 
 ```
 src/
@@ -168,15 +172,15 @@ src/
     └── index.ts
 ```
 
-## Development
+## 开发
 
 ```bash
 npm install
-npm run dev
-npm run build
-npm test
+npm run dev    # 开发模式
+npm run build  # 构建
+npm test       # 测试
 ```
 
-## License
+## 许可证
 
 MIT
