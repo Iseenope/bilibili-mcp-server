@@ -57,13 +57,13 @@ export function registerCommentTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `✅ 评论已发布\nrpid: ${rpid}\n内容: ${params.message.substring(0, 100)}`,
+              text: `评论已发布\nrpid: ${rpid}\n内容: ${params.message.substring(0, 100)}`,
             },
           ],
         };
       } catch (err) {
         return {
-          content: [{ type: 'text', text: `❌ 评论失败: ${(err as Error).message}` }],
+          content: [{ type: 'text', text: `评论失败: ${(err as Error).message}` }],
           isError: true,
         };
       }
@@ -94,12 +94,12 @@ export function registerCommentTools(server: McpServer): void {
           type: params.type ?? 1,
         });
         return {
-          content: [{ type: 'text', text: `✅ 已删除评论 rpid: ${params.rpid}` }],
+          content: [{ type: 'text', text: `已删除评论 rpid: ${params.rpid}` }],
         };
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 删除失败: ${(err as Error).message}` },
+            { type: 'text', text: `删除失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -139,13 +139,13 @@ export function registerCommentTools(server: McpServer): void {
         const label = (params.action ?? 1) === 1 ? '已点赞' : '已取消赞';
         return {
           content: [
-            { type: 'text', text: `✅ ${label} rpid: ${params.rpid}` },
+            { type: 'text', text: `${label} rpid: ${params.rpid}` },
           ],
         };
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 操作失败: ${(err as Error).message}` },
+            { type: 'text', text: `操作失败: ${(err as Error).message}` },
           ],
           isError: true,
         };

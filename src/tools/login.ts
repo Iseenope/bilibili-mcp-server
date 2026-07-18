@@ -33,7 +33,7 @@ export function registerLoginTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 生成二维码失败: ${(err as Error).message}` },
+            { type: 'text', text: `生成二维码失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -98,7 +98,7 @@ export function registerLoginTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ 检查登录状态失败: ${(err as Error).message}`,
+              text: `检查登录状态失败: ${(err as Error).message}`,
             },
           ],
           isError: true,

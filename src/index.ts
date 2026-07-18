@@ -12,6 +12,9 @@ import { registerMessageTools } from './tools/message.js';
 import { registerLoginTools } from './tools/login.js';
 import { registerContentTools } from './tools/content.js';
 import { registerLiveTools } from './tools/live.js';
+import { registerFollowTools } from './tools/follow.js';
+import { registerInteractionTools } from './tools/interaction.js';
+import { registerDownloadTools } from './tools/download.js';
 
 // ─── 启动前加载 .env ─────────────────────────────────────
 
@@ -48,11 +51,13 @@ async function checkCookieValidity(): Promise<void> {
     if (json.code === 0) {
       console.error(`[bilibili-mcp] ✅ Cookie 有效，用户: ${json.data?.uname || '?'}`);
     } else if (json.code === -101) {
-      console.error('[bilibili-mcp] ⚠️ Cookie 已过期，请更新后重试');
+      console.error('[bilibili-mcp] ⚠️ Cookie 已过期，请更新或刷新后重试');
       if (config.refreshToken) {
         console.error('[bilibili-mcp]   已设置 REFRESH_TOKEN，可调用 bilibili_refresh_cookie 尝试自动刷新');
       } else {
-        console.error('[bilibili-mcp]   如需自动刷新，请设置 BILIBILI_REFRESH_TOKEN');
+        console.error('[bilibili-mcp]   未设置 REFRESH_TOKEN，自动刷新不可用');
+        console.error('[bilibili-mcp]   选项 1: 浏览器 F12 → Console → localStorage.getItem(\'ac_time_value\') → 设置 BILIBILI_REFRESH_TOKEN');
+        console.error('[bilibili-mcp]   选项 2: 调用 bilibili_login + bilibili_login_check 扫码重新登录（更简单）');
       }
     } else {
       console.error(`[bilibili-mcp] ⚠️ Cookie 验证异常: code=${json.code}`);
@@ -85,6 +90,9 @@ registerMessageTools(server);
 registerLoginTools(server);
 registerContentTools(server);
 registerLiveTools(server);
+registerFollowTools(server);
+registerInteractionTools(server);
+registerDownloadTools(server);
 
 // ─── 启动 ─────────────────────────────────────────────────
 

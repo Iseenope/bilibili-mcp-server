@@ -108,9 +108,39 @@ export function getRefreshToken(): string | undefined {
 /** 获取完整 Cookie 字符串（含额外字段），用于需要完整浏览器 Cookie 的接口 */
 export function getFullCookieString(): string {
   const config = loadConfig();
-  if (config.fullCookie) return config.fullCookie;
-  // 拼接基础 Cookie
-  return `SESSDATA=${config.sessdata}; bili_jct=${config.bili_jct}; DedeUserID=${config.dede_user_id}`;
+  // 始终包含基础字段（SESSDATA / bili_jct / DedeUserID）
+  const baseParts: string[] = [];
+  if (config.sessdata) baseParts.push(`SESSDATA=${config.sessdata}`);
+  if (config.bili_jct) baseParts.push(`bili_jct=${config.bili_jct}`);
+  if (config.dede_user_id) baseParts.push(`DedeUserID=${config.dede_user_id}`);
+  const baseCookie = baseParts.join('; ');
+
+  // 如果设置了完整 Cookie 字符串，将其拆开与基础字段合并去重
+  if (config.fullCookie) {
+    const fullParts = config.fullCookie.split(/;\s*/).filter(Boolean);
+    // 收集所有字段名 → 值的 map，基础字段优先
+    const map = new Map<string, string>();
+    for (const part of fullParts) {
+      const eq = part.indexOf('=');
+      if (eq <= 0) continue;
+      const k = part.slice(0, eq).trim();
+      const v = part.slice(eq + 1).trim();
+      if (!map.has(k)) map.set(k, v);
+    }
+    // 基础字段覆盖
+    for (const part of baseParts) {
+      const eq = part.indexOf('=');
+      if (eq <= 0) continue;
+      const k = part.slice(0, eq).trim();
+      const v = part.slice(eq + 1).trim();
+      map.set(k, v);
+    }
+    return Array.from(map.entries())
+      .map(([k, v]) => `${k}=${v}`)
+      .join('; ');
+  }
+
+  return baseCookie;
 }
 
 /** 清除配置缓存（用于测试） */

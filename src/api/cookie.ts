@@ -110,10 +110,21 @@ export async function refreshCookie(): Promise<{
     return {
       success: false,
       message: [
-        '未设置 REFRESH_TOKEN，无法刷新 Cookie。',
-        '请在浏览器中打开 bilibili.com，按 F12 → Console，输入:',
-        "  console.log(localStorage.getItem('ac_time_value'))",
-        '将输出的值设置为环境变量 BILIBILI_REFRESH_TOKEN 后重试',
+        '未设置 BILIBILI_REFRESH_TOKEN，无法自动刷新 Cookie。',
+        '',
+        '获取方法（任选其一）：',
+        '',
+        '方法 1 - 浏览器获取：',
+        '  1. 打开 https://www.bilibili.com 并登录',
+        '  2. F12 打开开发者工具 → Console 标签',
+        "  3. 输入: console.log(localStorage.getItem('ac_time_value'))",
+        '  4. 复制输出值，设为 BILIBILI_REFRESH_TOKEN 环境变量',
+        '',
+        '方法 2 - 扫码登录（推荐，无需手动操作）：',
+        '  1. 调 AI 调用 bilibili_login 生成二维码',
+        '  2. 用手机 B 站 App 扫描',
+        '  3. 调 AI 调用 bilibili_login_check 完成登录',
+        '  4. 登录成功后 refresh_token 会自动保存到 Cookie 文件',
       ].join('\n'),
     };
   }

@@ -148,7 +148,7 @@ export function registerMessageTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ 检测回复失败: ${(err as Error).message}`,
+              text: `检测回复失败: ${(err as Error).message}`,
             },
           ],
           isError: true,
@@ -177,7 +177,7 @@ export function registerMessageTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ Cookie 刷新失败: ${(err as Error).message}`,
+              text: `Cookie 刷新失败: ${(err as Error).message}`,
             },
           ],
           isError: true,
@@ -240,7 +240,7 @@ export function registerMessageTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ 获取通知失败: ${(err as Error).message}`,
+              text: `获取通知失败: ${(err as Error).message}`,
             },
           ],
           isError: true,

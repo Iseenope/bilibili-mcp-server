@@ -57,7 +57,7 @@ export function registerUserTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ 获取视频列表失败: ${(err as Error).message}`,
+              text: `获取视频列表失败: ${(err as Error).message}`,
             },
           ],
           isError: true,
@@ -81,7 +81,7 @@ export function registerUserTools(server: McpServer): void {
         if (!rawData) {
           return {
             content: [
-              { type: 'text', text: `❌ 用户 uid:${params.uid} 不存在或不可访问` },
+              { type: 'text', text: `用户 uid:${params.uid} 不存在或不可访问` },
             ],
             isError: true,
           };
@@ -97,7 +97,7 @@ export function registerUserTools(server: McpServer): void {
           `等级: Lv${d.level || 0}`,
           `签名: ${d.sign || '(无)'}`,
           `性别: ${d.sex || '保密'}`,
-          `大会员: ${vip.status === 1 ? '✅ 是' : '❌ 否'}`,
+          `大会员: ${vip.status === 1 ? '是' : '否'}`,
           `认证: ${official.title || '无'}`,
           liveRoom?.roomStatus === 1
             ? `直播: ${liveRoom.title || '?'} (${liveRoom.liveStatus === 1 ? '直播中' : '未开播'})`
@@ -112,7 +112,7 @@ export function registerUserTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ 获取用户信息失败: ${(err as Error).message}`,
+              text: `获取用户信息失败: ${(err as Error).message}`,
             },
           ],
           isError: true,
@@ -209,7 +209,7 @@ export function registerUserTools(server: McpServer): void {
           content: [
             {
               type: 'text',
-              text: `❌ 获取收藏夹失败: ${(err as Error).message}`,
+              text: `获取收藏夹失败: ${(err as Error).message}`,
             },
           ],
           isError: true,

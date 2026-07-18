@@ -51,7 +51,7 @@ export function registerVideoTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 获取评论失败: ${(err as Error).message}` },
+            { type: 'text', text: `获取评论失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -146,7 +146,7 @@ export function registerVideoTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 搜索失败: ${(err as Error).message}` },
+            { type: 'text', text: `搜索失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -280,7 +280,7 @@ export function registerVideoTools(server: McpServer): void {
 
         if (!cid) {
           return {
-            content: [{ type: 'text', text: '❌ 无法获取视频 cid' }],
+            content: [{ type: 'text', text: '无法获取视频 cid' }],
             isError: true,
           };
         }
@@ -338,7 +338,7 @@ export function registerVideoTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 获取字幕失败: ${(err as Error).message}` },
+            { type: 'text', text: `获取字幕失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -368,7 +368,7 @@ export function registerVideoTools(server: McpServer): void {
 
         if (!cid) {
           return {
-            content: [{ type: 'text', text: '❌ 无法获取视频 cid' }],
+            content: [{ type: 'text', text: '无法获取视频 cid' }],
             isError: true,
           };
         }
@@ -420,7 +420,7 @@ export function registerVideoTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 获取弹幕失败: ${(err as Error).message}` },
+            { type: 'text', text: `获取弹幕失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -531,8 +531,94 @@ export function registerVideoTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 获取热搜失败: ${(err as Error).message}` },
+            { type: 'text', text: `获取热搜失败: ${(err as Error).message}` },
           ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // ─── 发送弹幕 ─────────────────────────────────────────
+  server.registerTool(
+    'bilibili_send_danmaku',
+    {
+      description: '向视频发送一条弹幕。B 站对此操作有极严格的风控，新账号或操作频繁的账号可能直接被风控拦截。建议每天不超过 5 条。',
+      inputSchema: {
+        videoId: z.string().describe('视频 BV 号或 avid'),
+        cid: z.number().describe('视频分 P 的 cid（通过 bilibili_video_info 获取）'),
+        progress: z.number().describe('弹幕出现时间点（毫秒），例如 30000 = 第 30 秒'),
+        message: z.string().max(100).describe('弹幕内容（最多 100 字符）'),
+        color: z
+          .number()
+          .optional()
+          .default(16777215)
+          .describe('弹幕颜色（十进制 RGB），默认 16777215（白色）'),
+        mode: z
+          .number()
+          .int()
+          .min(1)
+          .max(8)
+          .optional()
+          .default(1)
+          .describe('弹幕模式：1=滚动, 4=底部, 5=顶部, 7=高级'),
+      },
+    },
+    async (params) => {
+      try {
+        await biliApi.sendDanmaku({
+          videoId: params.videoId,
+          cid: params.cid,
+          progress: params.progress,
+          message: params.message,
+          color: params.color,
+          mode: params.mode as 1 | 4 | 5 | 7 | 8,
+        });
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `弹幕发送成功：${params.message}（时间 ${Math.floor(params.progress / 1000)}s）`,
+            },
+          ],
+        };
+      } catch (err) {
+        const msg = (err as Error).message;
+        if (msg.includes('-352') || msg.includes('风控')) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `弹幕发送失败：账号被 B 站风控拦截。\n建议：\n1. 等待 24 小时后再试\n2. 降低发送频率（建议每天 ≤ 3 条）\n3. 在浏览器中手动发一条弹幕"解封"\n4. 检查账号是否被封禁\n\n错误：${msg}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        if (msg.includes('-101') || msg.includes('未登录')) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `弹幕发送失败：登录态已失效。请调用 bilibili_refresh_cookie 或重新扫码登录后再试。`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        if (msg.includes('包含') || msg.includes('敏感词')) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: `弹幕发送失败：内容可能包含敏感词，请修改后重试。\n错误：${msg}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: 'text', text: `弹幕发送失败: ${msg}` }],
           isError: true,
         };
       }

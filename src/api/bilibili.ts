@@ -55,22 +55,11 @@ function decreaseInterval(): void {
 
 /** 构造默认请求头 */
 function getHeaders(): Record<string, string> {
-  const cookie = getCookie();
-  const fullCookie = getFullCookieString();
-  // 如果设置了完整 Cookie，优先使用
-  if (process.env.BILIBILI_FULL_COOKIE) {
-    return {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      Referer: 'https://www.bilibili.com',
-      Cookie: fullCookie,
-    };
-  }
   return {
     'User-Agent':
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     Referer: 'https://www.bilibili.com',
-    Cookie: `SESSDATA=${cookie.sessdata}; bili_jct=${cookie.bili_jct}; DedeUserID=${cookie.dede_user_id}`,
+    Cookie: getFullCookieString(),
   };
 }
 
@@ -93,13 +82,19 @@ async function request<T>(
   const { method = 'GET', params = {}, body, useWbi = false, noCookie = false, baseUrl = API_BASE } = options;
   let queryParams = { ...params };
   let retries = 0;
+  let wbiDisabled = false; // 一旦降级到底，标记不再使用 WBI
 
   while (true) {
     try {
       // WBI 签名
       let queryString = '';
-      if (useWbi) {
+      const effectiveUseWbi = useWbi && !wbiDisabled;
+      if (effectiveUseWbi) {
         queryParams = await signWbi(queryParams);
+      } else if (useWbi && wbiDisabled) {
+        // 降级后去掉已添加的 w_rid/wts
+        const { w_rid: _r, wts: _t, ...rest } = queryParams;
+        queryParams = rest;
       }
 
       const qKeys = Object.keys(queryParams);
@@ -109,7 +104,10 @@ async function request<T>(
           .join('&');
       }
 
-      const url = `${baseUrl}${path}${queryString ? '?' + queryString : ''}`;
+      // 降级时自动去掉路径中的 wbi
+      const effectivePath = wbiDisabled ? path.replace(/\/wbi\//g, '/') : path;
+
+      const url = `${baseUrl}${effectivePath}${queryString ? '?' + queryString : ''}`;
       const headers = noCookie
         ? {
             'User-Agent':
@@ -144,10 +142,17 @@ async function request<T>(
 
       const json = JSON.parse(text) as BilibiliResponse<T>;
 
-      // 处理 WBI 签名失败，刷新密钥重试
+      // 处理 WBI 签名失败，先清缓存重试一次，仍失败则永久降级到非 WBI 接口
       if (json.code === -352 && retries < MAX_RETRIES) {
-        clearWbiCache();
         retries++;
+        if (retries === 1) {
+          // 第 1 次重试：清缓存重新获取 wbi 密钥
+          clearWbiCache();
+        } else {
+          // 第 2 次重试：降级到底，去掉 WBI 签名
+          wbiDisabled = true;
+          console.error(`[wbi] 连续 ${retries} 次 -352，已降级到非 WBI 接口`);
+        }
         continue;
       }
 
@@ -176,12 +181,13 @@ async function request<T>(
         const guidance: Record<number, string> = {
           [-101]: '请检查 BILIBILI_SESSDATA 是否有效或已过期',
           [-111]: '请检查 BILIBILI_BILI_JCT 是否有效',
-          [-352]: 'WBI 签名异常，已自动重试',
+          [-352]: 'B 站风控拦截。可能是账号近期操作频繁（评论/点赞/投稿），建议等待 5-10 分钟后再试。自动已重试 2 次后降级到非 WBI 接口。',
           [-400]: '请求参数错误，请检查视频 ID 格式是否正确或资源是否存在',
-          [-403]: '权限不足，可能需要登录',
+          [-403]: '权限不足，可能需要登录，或该内容需要大会员',
           [-404]: '请求的资源不存在',
           [-412]: '请求被拦截，请补充 Cookie 字段（buvid3 等）或检查 User-Agent',
           [-509]: '请求过于频繁，请稍后重试',
+          [22115]: '该用户已设置隐私，无法查看其关注/粉丝列表',
         };
         const hint = guidance[json.code] ? `\n💡 ${guidance[json.code]}` : '';
         throw new Error(`[${json.code}] ${errMsg}${hint}`);
@@ -448,6 +454,175 @@ export const biliApi = {
         order: params.order || 'mtime',
       },
     });
+  },
+
+  // ─── 关注/取关 ─────────────────────────────────────────
+  async relationModify(params: {
+    fid: number;
+    act: 1 | 2; // 1=关注, 2=取关
+    re_src?: number;
+  }): Promise<Record<string, unknown>> {
+    const cookie = getCookie();
+    return request('/x/relation/modify', {
+      method: 'POST',
+      body: {
+        fid: String(params.fid),
+        act: String(params.act),
+        re_src: String(params.re_src || 14),
+        csrf: cookie.bili_jct,
+      },
+    });
+  },
+
+  // ─── 关注列表 ─────────────────────────────────────────
+  async followings(params: {
+    vmid: number;
+    pn?: number;
+    ps?: number;
+    order?: 'desc' | 'asc';
+  }): Promise<{
+    list?: Array<Record<string, unknown>>;
+    total?: number;
+  }> {
+    return request('/x/relation/followings', {
+      params: {
+        vmid: String(params.vmid),
+        pn: String(params.pn || 1),
+        ps: String(params.ps || 20),
+        order: params.order || 'desc',
+      },
+    });
+  },
+
+  // ─── 粉丝列表 ─────────────────────────────────────────
+  async followers(params: {
+    vmid: number;
+    pn?: number;
+    ps?: number;
+    order?: 'desc' | 'asc';
+  }): Promise<{
+    list?: Array<Record<string, unknown>>;
+    total?: number;
+  }> {
+    return request('/x/relation/followers', {
+      params: {
+        vmid: String(params.vmid),
+        pn: String(params.pn || 1),
+        ps: String(params.ps || 20),
+        order: params.order || 'desc',
+      },
+    });
+  },
+
+  // ─── 视频播放地址（DASH/MP4） ─────────────────────────
+  async playUrl(params: {
+    videoId: string;
+    cid: number;
+    qn?: number; // 画质代码：80=1080P, 64=720P, 32=480P, 16=360P
+    fnval?: number; // 1=MP4, 16=DASH
+    fourk?: boolean;
+  }): Promise<Record<string, unknown>> {
+    const body: Record<string, string> = {
+      cid: String(params.cid),
+      qn: String(params.qn || 80),
+      fnval: String(params.fnval || 16),
+      fourk: params.fourk ? '1' : '0',
+      platform: 'html5',
+      high_quality: '1',
+    };
+    if (/^BV/gi.test(params.videoId)) {
+      body.bvid = params.videoId;
+    } else {
+      body.aid = params.videoId;
+    }
+    return request('/x/player/playurl', { body, useWbi: true });
+  },
+
+  // ─── 发送弹幕 ─────────────────────────────────────────
+  async sendDanmaku(params: {
+    videoId: string;
+    cid: number;
+    progress: number; // 毫秒，弹幕出现时间点
+    message: string;
+    color?: number; // 默认 16777215（白色）
+    fontsize?: number; // 默认 25
+    mode?: 1 | 4 | 5 | 7 | 8; // 1=滚动, 4=底部, 5=顶部, 7=高级, 8=代码
+  }): Promise<Record<string, unknown>> {
+    const cookie = getCookie();
+    const body: Record<string, string> = {
+      type: '1',
+      oid: String(params.cid),
+      msg: params.message,
+      bvid: /^BV/gi.test(params.videoId) ? params.videoId : '',
+      aid: /^BV/gi.test(params.videoId) ? '' : params.videoId,
+      progress: String(Math.max(0, Math.floor(params.progress))),
+      color: String(params.color ?? 16777215),
+      fontsize: String(params.fontsize ?? 25),
+      mode: String(params.mode ?? 1),
+      pool: '0',
+      plat: '1',
+      from_scene: '5',
+      csrf: cookie.bili_jct,
+    };
+    return request('/x/v2/dm/post', { method: 'POST', body });
+  },
+
+  // ─── 视频互动 ─────────────────────────────────────────
+  async videoLike(params: {
+    videoId: string;
+    action: 1 | 2; // 1=点赞, 2=取消
+  }): Promise<Record<string, unknown>> {
+    const cookie = getCookie();
+    const body: Record<string, string> = {
+      thumbs_up: String(params.action),
+      csrf: cookie.bili_jct,
+    };
+    if (/^BV/gi.test(params.videoId)) {
+      body.bvid = params.videoId;
+    } else {
+      body.aid = params.videoId;
+    }
+    return request('/x/v2/view/like', { method: 'POST', body });
+  },
+
+  async videoCoin(params: {
+    videoId: string;
+    multiply: 1 | 2; // 投币数量（1 或 2）
+  }): Promise<Record<string, unknown>> {
+    const cookie = getCookie();
+    const body: Record<string, string> = {
+      multiply: String(params.multiply),
+      select_like: '0',
+      csrf: cookie.bili_jct,
+    };
+    if (/^BV/gi.test(params.videoId)) {
+      body.bvid = params.videoId;
+    } else {
+      body.aid = params.videoId;
+    }
+    return request('/x/v2/view/coin', { method: 'POST', body });
+  },
+
+  async videoFavorite(params: {
+    videoId: string;
+    mediaIds: number[]; // 收藏夹 ID 列表
+    add: boolean; // true=添加, false=取消
+  }): Promise<Record<string, unknown>> {
+    const cookie = getCookie();
+    const body: Record<string, string> = {
+      csrf: cookie.bili_jct,
+    };
+    if (params.add) {
+      body.add_media_ids = params.mediaIds.join(',');
+    } else {
+      body.del_media_ids = params.mediaIds.join(',');
+    }
+    if (/^BV/gi.test(params.videoId)) {
+      body.bvid = params.videoId;
+    } else {
+      body.aid = params.videoId;
+    }
+    return request('/x/v2/view/favorite', { method: 'POST', body });
   },
 
   // ─── @和点赞通知 ────────────────────────────────────────
