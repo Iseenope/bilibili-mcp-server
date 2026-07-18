@@ -30,9 +30,19 @@ export function registerLiveTools(server: McpServer): void {
       const { uid } = params;
       try {
         // 第一步：通过 uid 获取 room_id 和直播状态
-        const initData = await biliApi.liveRoomInit(uid);
-        const roomId = initData.room_id as number;
-        const liveStatus = initData.live_status as number; // 0=未开播, 1=直播中, 2=轮播中
+        let roomId: number;
+        let liveStatus: number;
+
+        try {
+          const initData = await biliApi.liveRoomInit(uid);
+          roomId = initData.room_id as number;
+          liveStatus = initData.live_status as number;
+        } catch {
+          // room_init 失败，尝试直接用 uid 当做 room_id 查（部分用户 uid=room_id）
+          const fallback = await biliApi.liveRoomInfo(uid);
+          roomId = uid;
+          liveStatus = fallback.live_status as number;
+        }
 
         if (!roomId || roomId === 0) {
           return {
@@ -98,13 +108,14 @@ export function registerLiveTools(server: McpServer): void {
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        // B 站返回 -400 / -404 / 60004 表示用户不存在或无直播间
-        if (message.includes('-400') || message.includes('-404') || message.includes('60004')) {
+        if (message.includes('-400') || message.includes('-404') || message.includes('60004') || message.includes('未找到该房间')) {
           return {
             content: [
               {
                 type: 'text',
-                text: `该用户（uid: ${uid}）未开通直播间`,
+                text: `未找到该用户的直播间（uid: ${uid}）。部分 UP 主的 room_id 与 uid 不同，` +
+                      `请先用 bilibili_search 搜索该 UP 主获取正确的房间号，` +
+                      `或直接使用房间号查询。`,
               },
             ],
           };
