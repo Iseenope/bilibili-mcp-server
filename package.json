@@ -1,7 +1,7 @@
 {
   "name": "bilibili-mcp-server",
   "version": "1.0.10",
-  "description": "Bilibili MCP Server — B站 API 的 MCP 服务封装，支持评论管理、视频搜索、弹幕字幕获取、Cookie 自动刷新等",
+  "description": "B站 MCP 服务 — 哔哩哔哩 API 的 Model Context Protocol 封装，提供视频搜索、弹幕、字幕、评论、直播、用户信息、专栏等 22 个工具",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -23,12 +23,24 @@
   },
   "keywords": [
     "bilibili",
+    "b站",
+    "哔哩哔哩",
     "mcp",
     "model-context-protocol",
     "bilibili-api",
+    "弹幕",
+    "danmaku",
+    "danmu",
+    "评论",
+    "字幕",
+    "视频",
+    "直播",
+    "mcp-server",
+    "mcp-tools",
     "claude",
     "cursor",
-    "ai"
+    "ai",
+    "npx"
   ],
   "repository": {
     "type": "git",
