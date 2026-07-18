@@ -229,9 +229,7 @@ export async function refreshCookie(): Promise<{
 
   // 保存新的 refresh_token
   if (newRefreshToken) {
-    // 通过环境变量持久化需要用户手动更新，但可以提示
-    log.push('[cookie] !!! 新的 refresh_token 已返回，请更新环境变量 BILIBILI_REFRESH_TOKEN');
-    log.push(`[cookie]     新的 refresh_token: ${newRefreshToken}`);
+    log.push('[cookie] ✅ 新的 refresh_token 已生成并自动保存到 Cookie 文件');
   }
 
   // 验证新 Cookie

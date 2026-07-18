@@ -75,7 +75,7 @@ export BILIBILI_DETECT_FILE=/path/to/detect.json   # Reply detection state file
 
 ### MCP Client Configuration
 
-Add to your MCP client config (Claude Desktop, Cursor, CodeBuddy, etc.):
+Add to your MCP client config (Claude Desktop, Cursor, etc.):
 
 ```json
 {

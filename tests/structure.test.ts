@@ -33,6 +33,7 @@ describe('项目结构完整性', () => {
       'src/tools/message.ts',
       'src/tools/login.ts',
       'src/tools/content.ts',
+      'src/tools/live.ts',
     ];
     for (const file of files) {
       expect(fs.existsSync(file)).toBe(true);
@@ -58,6 +59,7 @@ describe('项目结构完整性', () => {
       'dist/tools/message.js',
       'dist/tools/login.js',
       'dist/tools/content.js',
+      'dist/tools/live.js',
     ];
     for (const file of files) {
       expect(fs.existsSync(file)).toBe(true);
@@ -96,6 +98,7 @@ describe('工具注册完整性', () => {
     const message = await import('../src/tools/message.js');
     const login = await import('../src/tools/login.js');
     const content = await import('../src/tools/content.js');
+    const live = await import('../src/tools/live.js');
 
     expect(comment.registerCommentTools).toBeTypeOf('function');
     expect(video.registerVideoTools).toBeTypeOf('function');
@@ -103,6 +106,7 @@ describe('工具注册完整性', () => {
     expect(message.registerMessageTools).toBeTypeOf('function');
     expect(login.registerLoginTools).toBeTypeOf('function');
     expect(content.registerContentTools).toBeTypeOf('function');
+    expect(live.registerLiveTools).toBeTypeOf('function');
   });
 
   it('API 模块应导出必要函数', async () => {

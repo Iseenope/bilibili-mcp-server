@@ -139,9 +139,9 @@ export async function pollQrCode(
           refresh_token: data.refresh_token,
         };
 
-        // 如果返回了 refresh_token，提示用户保存
+        // 如果返回了 refresh_token，提示已保存
         if (data.refresh_token) {
-          result.message += `\n💡 新的 REFRESH_TOKEN: ${data.refresh_token}\n请设置环境变量 BILIBILI_REFRESH_TOKEN=${data.refresh_token} 以启用 Cookie 自动刷新`;
+          result.message += `\n💡 扫码登录成功，refresh_token 已保存。Cookie 自动刷新功能已就绪`;
         }
 
         return result;

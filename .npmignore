@@ -16,6 +16,9 @@ docs/
 .gitignore
 
 # IDE
+.codebuddy/
+
+# IDE
 .vscode/
 .idea/
 *.swp

@@ -75,7 +75,7 @@ export BILIBILI_DETECT_FILE=/path/to/detect.json  # 检测回复状态文件
 
 ### MCP 客户端配置
 
-在 MCP 客户端（Claude Desktop、Cursor、CodeBuddy 等）配置文件中添加：
+在 MCP 客户端（Claude Desktop、Cursor 等）配置文件中添加：
 
 ```json
 {

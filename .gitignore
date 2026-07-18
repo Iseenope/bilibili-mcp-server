@@ -8,3 +8,4 @@ coverage/
 .vitest/
 .DS_Store
 Thumbs.db
+.codebuddy/
