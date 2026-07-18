@@ -1,34 +1,20 @@
 # Bilibili MCP Server
 
-[![CI](https://github.com/Iseenope/bilibili-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/Iseenope/bilibili-mcp-server/actions/workflows/ci.yml)
+Model Context Protocol server for Bilibili. Provides video search, comments, danmaku, subtitles, user info, articles, QR login, and more. 22 tools total.
 
-[中文](./README_zh.md) | [English](./README.md)
-
-A Model Context Protocol (MCP) server for Bilibili (B站), enabling AI assistants to interact with Bilibili's content management ecosystem — comments, search, video info, subtitles, danmaku, user data, dynamic feed, articles, and more.
-
-## Features
-
-**✓ 22 Tools** covering the full Bilibili interaction lifecycle:
+## Tools
 
 | Category | Tools | Count |
 |----------|-------|:-----:|
-| 💬 Comments | `bilibili_reply`, `bilibili_delete_comment`, `bilibili_like_comment` | 3 |
-| 🔍 Search | `bilibili_search`, `bilibili_search_hot` | 2 |
-| 📺 Video | `bilibili_video_info`, `bilibili_video_comments`, `bilibili_video_subtitle`, `bilibili_video_danmaku`, `bilibili_hot` | 5 |
-| 👤 User | `bilibili_user_info`, `bilibili_user_videos`, `bilibili_user_favorites` | 3 |
-| 📰 Content | `bilibili_user_dynamics`, `bilibili_article_info`, `bilibili_user_articles` | 3 |
-| 🔔 Message | `bilibili_detect_replies`, `bilibili_notifications` | 2 |
-| 🎥 Live | `bilibili_live_info` live streaming info (status/title/viewers) | 1 |
-| 🔑 Login | `bilibili_login`, `bilibili_login_check` | 2 |
-| 🔄 System | `bilibili_refresh_cookie` | 1 |
-
-**✓ Highlights:**
-- **Cookie Auto-Refresh** — Complete 6-step refresh flow (check → RSA → csrf → refresh → confirm → SSO)
-- **Full WBI Signature** — Manual implementation, no SDK dependency
-- **QR Code Login** — No manual cookie copying from browser
-- **Adaptive Rate Limiting** — Auto-throttles on -509 (rate limit) errors
-- **Smart Retry** — Only retries on network errors, never on programming bugs
-- **Reply Detection** — Persistent state across restarts
+| Comments | `bilibili_reply`, `bilibili_delete_comment`, `bilibili_like_comment` | 3 |
+| Search | `bilibili_search`, `bilibili_search_hot` | 2 |
+| Video | `bilibili_video_info`, `bilibili_video_comments`, `bilibili_video_subtitle`, `bilibili_video_danmaku`, `bilibili_hot` | 5 |
+| User | `bilibili_user_info`, `bilibili_user_videos`, `bilibili_user_favorites` | 3 |
+| Content | `bilibili_user_dynamics`, `bilibili_article_info`, `bilibili_user_articles` | 3 |
+| Message | `bilibili_detect_replies`, `bilibili_notifications` | 2 |
+| Live | `bilibili_live_info` | 1 |
+| Login | `bilibili_login`, `bilibili_login_check` | 2 |
+| System | `bilibili_refresh_cookie` | 1 |
 
 ## Quick Start
 
@@ -40,7 +26,7 @@ A Model Context Protocol (MCP) server for Bilibili (B站), enabling AI assistant
 ### Installation
 
 ```bash
-# Run directly (no install needed)
+# Run directly
 npx bilibili-mcp-server
 
 # Or install globally
@@ -50,32 +36,29 @@ bilibili-mcp-server
 
 ### Configuration
 
-You can configure via environment variables OR by placing a `.env` file in the project directory.
+Configure via environment variables or a `.env` file:
 
 ```bash
-# Required - Get from browser DevTools → Application → Cookies → bilibili.com
+# Required
 export BILIBILI_SESSDATA=your_sessdata
 export BILIBILI_BILI_JCT=your_bili_jct
 export BILIBILI_DEDE_USER_ID=your_uid
 
-# Optional - Cookie auto-refresh (recommended)
-# Get it: bilibili.com → F12 → Console → run:
+# Optional - Cookie auto-refresh
+# bilibili.com → F12 → Console:
 #   console.log(localStorage.getItem('ac_time_value'))
 export BILIBILI_REFRESH_TOKEN=your_refresh_token
 
-# Optional - Full cookie string (for features like trending searches)
-# Merge all cookies from bilibili.com domain into one line
+# Optional - Full cookie string (for trending searches)
 # export BILIBILI_FULL_COOKIE="buvid3=xxx; buvid4=xxx; _uuid=xxx; ..."
 
-# Optional - Other
-export BILIBILI_AUTO_REFRESH=true        # Auto-refresh cookies (default: true)
-export BILIBILI_COOKIE_FILE=/path/to/cookie.json  # Cookie persistence file
-export BILIBILI_DETECT_FILE=/path/to/detect.json   # Reply detection state file
+# Optional
+export BILIBILI_AUTO_REFRESH=true
+export BILIBILI_COOKIE_FILE=/path/to/cookie.json
+export BILIBILI_DETECT_FILE=/path/to/detect.json
 ```
 
 ### MCP Client Configuration
-
-Add to your MCP client config (Claude Desktop, Cursor, etc.):
 
 ```json
 {
@@ -93,124 +76,109 @@ Add to your MCP client config (Claude Desktop, Cursor, etc.):
 }
 ```
 
-### No Cookies? Try QR Scan-to-Login
+### QR Login
 
-If you don't want to manually copy cookies from the browser, use the built-in QR login flow:
-
-```
-1. AI calls bilibili_login → returns QR code URL
-2. User scans the QR code with mobile Bilibili App
-3. AI calls bilibili_login_check to poll login status
-4. On success, cookies are automatically saved
-```
+1. Call `bilibili_login` to get a QR code
+2. Scan with Bilibili mobile app
+3. Call `bilibili_login_check` to poll status
+4. Cookies are saved automatically on success
 
 ## Tool Reference
 
 ### Login & Authentication
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `bilibili_login` | Generate QR code for scan-to-login | (none) |
-| `bilibili_login_check` | Poll QR login status, auto-save Cookie | `loginKey`, `maxRetries?` |
-| `bilibili_refresh_cookie` | Manually trigger cookie refresh | (none) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `bilibili_login` | Generate QR code for login | - |
+| `bilibili_login_check` | Poll QR login status | `loginKey`, `maxRetries?` |
+| `bilibili_refresh_cookie` | Manually refresh cookies | - |
 
 ### Comment Management
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
+| Tool | Description | Parameters |
+|------|-------------|------------|
 | `bilibili_reply` | Post a comment or reply | `videoId`, `message`, `parentRpid?` |
 | `bilibili_delete_comment` | Delete your comment | `videoId`, `rpid` |
-| `bilibili_like_comment` | Like/unlike a comment | `videoId`, `rpid`, `action`(1=like/0=unlike) |
+| `bilibili_like_comment` | Like/unlike a comment | `videoId`, `rpid`, `action` |
 
 ### Video & Search
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
+| Tool | Description | Parameters |
+|------|-------------|------------|
 | `bilibili_search` | Search videos | `keyword`, `order?`, `page?`, `duration?` |
-| `bilibili_video_info` | Get video details | `videoId` (BV/AV) |
+| `bilibili_video_info` | Get video details | `videoId` |
 | `bilibili_video_comments` | Get video comments | `videoId`, `max?` |
-| `bilibili_video_subtitle` | Get video subtitles | `videoId`, `lang?` |
-| `bilibili_video_danmaku` | Get danmaku (bullet comments) | `videoId`, `segment?` |
+| `bilibili_video_subtitle` | Get subtitles | `videoId`, `lang?` |
+| `bilibili_video_danmaku` | Get danmaku | `videoId`, `segment?` |
 | `bilibili_hot` | Trending videos | `page?`, `max?` |
-| `bilibili_search_hot` | Trending search keywords | (none) |
+| `bilibili_search_hot` | Trending search keywords | - |
 
 ### User
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
+| Tool | Description | Parameters |
+|------|-------------|------------|
 | `bilibili_user_info` | Get user profile | `uid` |
 | `bilibili_user_videos` | Get user's video list | `uid`, `max?` |
 | `bilibili_user_favorites` | Get favorites/folders | `uid`, `folderId?`, `max?` |
 
-### Content (Dynamic & Articles)
+### Content (Dynamics & Articles)
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
+| Tool | Description | Parameters |
+|------|-------------|------------|
 | `bilibili_user_dynamics` | Get user's dynamic feed | `uid`, `max?` |
 | `bilibili_article_info` | Get article details | `cvid` |
 | `bilibili_user_articles` | Get user's article list | `uid`, `max?` |
 
 ### Notifications
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `bilibili_detect_replies` | Detect new replies (persistent) | `max?` |
-| `bilibili_notifications` | View unread notifications overview | (none) |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `bilibili_detect_replies` | Detect new replies | `max?` |
+| `bilibili_notifications` | View unread notifications | - |
 
 ### Live Streaming
 
-| Tool | Description | Key Parameters |
-|------|-------------|----------------|
-| `bilibili_live_info` | Query live room info (status/title/viewers/category) | `uid` |
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `bilibili_live_info` | Query live room info | `uid` |
 
 ## Architecture
 
 ```
 src/
-├── index.ts           # MCP Server entry point
-├── env.ts             # .env auto-loader
-├── config.ts          # Environment config management
+├── index.ts
+├── env.ts
+├── config.ts
 ├── api/
-│   ├── http.ts        # Shared HTTP utilities (noProxyFetch, isRetryableError)
-│   ├── bilibili.ts    # B站 API client (rate-limited, smart-retry)
-│   ├── wbi.ts         # WBI signature (cached, noProxyFetch)
-│   ├── cookie.ts      # Cookie refresh (6-step flow, noProxyFetch)
-│   ├── login.ts       # QR code login (noProxyFetch)
-│   └── danmaku.ts     # Danmaku protobuf parser
+│   ├── http.ts
+│   ├── bilibili.ts
+│   ├── wbi.ts
+│   ├── cookie.ts
+│   ├── login.ts
+│   └── danmaku.ts
 ├── tools/
-│   ├── comment.ts     # Comment tools (3)
-│   ├── video.ts       # Video/search tools (5+2)
-│   ├── user.ts        # User/favorites tools (3)
-│   ├── content.ts     # Dynamic/article tools (3)
-│   ├── message.ts     # Message/notification tools (3)
-│   ├── login.ts       # Login tools (2)
-│   └── live.ts        # Live streaming tools (1)
+│   ├── comment.ts
+│   ├── video.ts
+│   ├── user.ts
+│   ├── content.ts
+│   ├── message.ts
+│   ├── login.ts
+│   └── live.ts
 └── types/
-    └── index.ts       # TypeScript type definitions
+    └── index.ts
 ```
 
 ## Development
 
 ```bash
-# Clone & install
 git clone https://github.com/yourusername/bilibili-mcp-server
 cd bilibili-mcp-server
 npm install
-
-# Run in development mode
 npm run dev
-
-# Build
 npm run build
-
-# Run tests
 npm test
 ```
 
 ## License
 
 MIT
-
-## Links
-
-- [MCP Protocol](https://modelcontextprotocol.io)
