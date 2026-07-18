@@ -1,12 +1,14 @@
 # Bilibili MCP Server
 
+[![CI](https://github.com/Iseenope/bilibili-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/Iseenope/bilibili-mcp-server/actions/workflows/ci.yml)
+
 [中文](./README_zh.md) | [English](./README.md)
 
 A Model Context Protocol (MCP) server for Bilibili (B站), enabling AI assistants to interact with Bilibili's content management ecosystem — comments, search, video info, subtitles, danmaku, user data, dynamic feed, articles, and more.
 
 ## Features
 
-**✓ 21 Tools** covering the full Bilibili interaction lifecycle:
+**✓ 22 Tools** covering the full Bilibili interaction lifecycle:
 
 | Category | Tools | Count |
 |----------|-------|:-----:|
@@ -16,6 +18,7 @@ A Model Context Protocol (MCP) server for Bilibili (B站), enabling AI assistant
 | 👤 User | `bilibili_user_info`, `bilibili_user_videos`, `bilibili_user_favorites` | 3 |
 | 📰 Content | `bilibili_user_dynamics`, `bilibili_article_info`, `bilibili_user_articles` | 3 |
 | 🔔 Message | `bilibili_detect_replies`, `bilibili_notifications` | 2 |
+| 🎥 Live | `bilibili_live_info` live streaming info (status/title/viewers) | 1 |
 | 🔑 Login | `bilibili_login`, `bilibili_login_check` | 2 |
 | 🔄 System | `bilibili_refresh_cookie` | 1 |
 
@@ -90,6 +93,17 @@ Add to your MCP client config (Claude Desktop, Cursor, CodeBuddy, etc.):
 }
 ```
 
+### No Cookies? Try QR Scan-to-Login
+
+If you don't want to manually copy cookies from the browser, use the built-in QR login flow:
+
+```
+1. AI calls bilibili_login → returns QR code URL
+2. User scans the QR code with mobile Bilibili App
+3. AI calls bilibili_login_check to poll login status
+4. On success, cookies are automatically saved
+```
+
 ## Tool Reference
 
 ### Login & Authentication
@@ -143,6 +157,12 @@ Add to your MCP client config (Claude Desktop, Cursor, CodeBuddy, etc.):
 | `bilibili_detect_replies` | Detect new replies (persistent) | `max?` |
 | `bilibili_notifications` | View unread notifications overview | (none) |
 
+### Live Streaming
+
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `bilibili_live_info` | Query live room info (status/title/viewers/category) | `uid` |
+
 ## Architecture
 
 ```
@@ -156,14 +176,14 @@ src/
 │   ├── wbi.ts         # WBI signature (cached, noProxyFetch)
 │   ├── cookie.ts      # Cookie refresh (6-step flow, noProxyFetch)
 │   ├── login.ts       # QR code login (noProxyFetch)
-│   └── http.ts        # Shared HTTP utilities
 ├── tools/
 │   ├── comment.ts     # Comment tools (3)
 │   ├── video.ts       # Video/search tools (5+2)
 │   ├── user.ts        # User/favorites tools (3)
 │   ├── content.ts     # Dynamic/article tools (3)
 │   ├── message.ts     # Message/notification tools (3)
-│   └── login.ts       # Login tools (2)
+│   ├── login.ts       # Login tools (2)
+│   └── live.ts        # Live streaming tools (1)
 └── types/
     └── index.ts       # TypeScript type definitions
 ```
@@ -196,7 +216,7 @@ npm test
 | Reply Detection | ✅ Persistent state | ❌ |
 | Rate Limiting | ✅ Adaptive (auto-throttle) | ❌ |
 | Smart Retry | ✅ Network errors only | ⚠️ All errors |
-| Tool Count | 21 | 4-27 |
+| Tool Count | 22 | 4-27 |
 | Language | TypeScript (ESM) | Mostly Python |
 | Platform Support | All MCP clients | Same |
 

@@ -1,12 +1,14 @@
 # Bilibili MCP Server
 
+[![CI](https://github.com/Iseenope/bilibili-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/Iseenope/bilibili-mcp-server/actions/workflows/ci.yml)
+
 [中文](./README_zh.md) | [English](./README.md)
 
 一个基于 Model Context Protocol (MCP) 的 B站 服务封装，让 AI 助手能够直接操作 B站 的评论管理、视频搜索、弹幕字幕获取、用户信息查询、动态专栏、二维码登录等核心功能。
 
 ## 功能特色
 
-**✓ 21 个工具** 覆盖 B站 完整交互链路：
+**✓ 22 个工具** 覆盖 B站 完整交互链路：
 
 | 类别 | 工具 | 数量 |
 |:----:|------|:----:|
@@ -16,6 +18,7 @@
 | 👤 用户 | `bilibili_user_info` 用户信息、`bilibili_user_videos` UP主视频、`bilibili_user_favorites` 收藏夹 | 3 |
 | 📰 内容 | `bilibili_user_dynamics` UP主动态、`bilibili_article_info` 专栏详情、`bilibili_user_articles` UP主专栏 | 3 |
 | 🔔 消息 | `bilibili_detect_replies` 检测新回复、`bilibili_notifications` 消息通知 | 2 |
+| 🎥 直播 | `bilibili_live_info` 直播信息查询（状态/标题/在线人数） | 1 |
 | 🔑 登录 | `bilibili_login` 生成登录二维码、`bilibili_login_check` 轮询扫码状态 | 2 |
 | 🔄 系统 | `bilibili_refresh_cookie` Cookie 刷新 | 1 |
 
@@ -155,6 +158,12 @@ export BILIBILI_DETECT_FILE=/path/to/detect.json  # 检测回复状态文件
 | `bilibili_detect_replies` | 检测新回复 | `max?` |
 | `bilibili_notifications` | 查看未读通知 | (无) |
 
+### 直播
+
+| 工具 | 功能 | 主要参数 |
+|------|------|----------|
+| `bilibili_live_info` | 查询直播间信息（状态/标题/在线人数/分类） | `uid` |
+
 ## 项目架构
 
 ```
@@ -174,7 +183,8 @@ src/
 │   ├── user.ts        # 用户/收藏夹工具 (3)
 │   ├── content.ts     # 动态/专栏工具 (3)
 │   ├── message.ts     # 消息/通知工具 (3)
-│   └── login.ts       # 登录工具 (2)
+│   ├── login.ts       # 登录工具 (2)
+│   └── live.ts        # 直播工具 (1)
 └── types/
     └── index.ts       # TypeScript 类型定义
 ```
@@ -211,7 +221,7 @@ docker run --env-file .env bilibili-mcp-server
 | 检测回复 | ✅ 状态持久化 | ❌ |
 | 自适应限流 | ✅ 遇 -509 自动降速 | ❌ |
 | 智能重试 | ✅ 仅网络错误 | ⚠️ 所有异常 |
-| 工具数量 | 21 个 | 4-27 个 |
+| 工具数量 | 22 个 | 4-27 个 |
 | 开发语言 | TypeScript (ESM) | 大部分是 Python |
 | 平台支持 | 所有 MCP 客户端 | 相同 |
 
