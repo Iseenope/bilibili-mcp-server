@@ -6,6 +6,7 @@ import { BilibiliResponse, BILI_ERROR_MAP } from '../types/index.js';
 // ─── 常量 ─────────────────────────────────────────────────
 
 const API_BASE = 'https://api.bilibili.com';
+const LIVE_API_BASE = 'https://api.live.bilibili.com';
 const REQUEST_TIMEOUT = 15_000;
 const REQUEST_INTERVAL_MS = 500; // 基础请求间隔限流
 const MAX_RETRIES = 2;           // 最大重试次数（不含首次）
@@ -84,11 +85,12 @@ async function request<T>(
     body?: Record<string, string>;
     useWbi?: boolean;
     noCookie?: boolean;
+    baseUrl?: string;
   } = {}
 ): Promise<T> {
   await throttle();
 
-  const { method = 'GET', params = {}, body, useWbi = false, noCookie = false } = options;
+  const { method = 'GET', params = {}, body, useWbi = false, noCookie = false, baseUrl = API_BASE } = options;
   let queryParams = { ...params };
   let retries = 0;
 
@@ -107,7 +109,7 @@ async function request<T>(
           .join('&');
       }
 
-      const url = `${API_BASE}${path}${queryString ? '?' + queryString : ''}`;
+      const url = `${baseUrl}${path}${queryString ? '?' + queryString : ''}`;
       const headers = noCookie
         ? {
             'User-Agent':
@@ -500,6 +502,32 @@ export const biliApi = {
         ps: params.ps || '10',
         sort: 'publish_time',
       },
+    });
+  },
+
+  // ─── 直播信息 ─────────────────────────────────────────
+  /**
+   * 获取用户直播间 ID（从 uid 映射到 room_id）
+   */
+  async liveRoomInit(uid: number): Promise<{
+    room_id: number;
+    uid: number;
+    live_status: number;
+    [key: string]: unknown;
+  }> {
+    return request('/room/v1/Room/room_init', {
+      params: { id: String(uid) },
+      baseUrl: LIVE_API_BASE,
+    });
+  },
+
+  /**
+   * 获取直播间详细信息
+   */
+  async liveRoomInfo(roomId: number): Promise<Record<string, unknown>> {
+    return request('/room/v1/Room/get_info', {
+      params: { room_id: String(roomId) },
+      baseUrl: LIVE_API_BASE,
     });
   },
 };

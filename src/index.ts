@@ -11,6 +11,7 @@ import { registerUserTools } from './tools/user.js';
 import { registerMessageTools } from './tools/message.js';
 import { registerLoginTools } from './tools/login.js';
 import { registerContentTools } from './tools/content.js';
+import { registerLiveTools } from './tools/live.js';
 
 // ─── 启动前加载 .env ─────────────────────────────────────
 
@@ -83,6 +84,7 @@ registerUserTools(server);
 registerMessageTools(server);
 registerLoginTools(server);
 registerContentTools(server);
+registerLiveTools(server);
 
 // ─── 启动 ─────────────────────────────────────────────────
 
@@ -95,7 +97,7 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  const toolCount = 21; // 目前 21 个工具
+  const toolCount = 22; // 目前 22 个工具
   console.error(`[bilibili-mcp] ✅ Server running on stdio`);
   console.error(`[bilibili-mcp] 📋 Tools registered: ${toolCount} 个工具`);
   console.error(`[bilibili-mcp] 🔄 Cookie auto-refresh: ${process.env.BILIBILI_AUTO_REFRESH !== 'false' ? 'enabled' : 'disabled'}`);
