@@ -20,7 +20,7 @@ Model Context Protocol server for Bilibili. Provides video search, comments, dan
 
 ### Requirements
 
-- Node.js 18+
+- Node.js 22+
 - A Bilibili account (for authenticated operations)
 
 ### Installation
