@@ -17,7 +17,7 @@ export function registerLiveTools(server: McpServer): void {
     'bilibili_live_info',
     {
       description:
-        '查询 B站 UP 主的直播间信息。输入 uid（用户 ID），返回直播状态（是否开播）、直播间标题、在线人数、关注数等。如果用户正在直播，还会返回开播时间和关键帧截图地址',
+        '查询 B站 UP 主的直播间信息。输入 uid（用户 ID），返回直播状态（是否开播）、直播间标题、人气值（热度）、关注数、直播分类、弹幕热词等。注意：人气值是热度指标，非真实观看人数',
       inputSchema: {
         uid: z
           .number()
@@ -58,8 +58,8 @@ export function registerLiveTools(server: McpServer): void {
         // 第二步：获取直播间详细信息
         const roomInfo = await biliApi.liveRoomInfo(roomId);
 
-        const title = (roomInfo.title as string) || '未设置标题';
-        const online = (roomInfo.online as number) || 0;
+const title = (roomInfo.title as string) || '未设置标题';
+        const popularity = (roomInfo.online as number) || 0;
         const attention = (roomInfo.attention as number) || 0;
         const description = (roomInfo.description as string) || '';
         const tags = (roomInfo.tags as string) || '';
@@ -68,39 +68,44 @@ export function registerLiveTools(server: McpServer): void {
         const liveTime = (roomInfo.live_time as string) || '';
         const coverUrl = (roomInfo.user_cover as string) || (roomInfo.cover as string) || '';
         const keyframeUrl = (roomInfo.keyframe as string) || '';
+        const shortId = (roomInfo.short_id as number) || 0;
+        const hotWords = (roomInfo.hot_words as string[]) || [];
 
         const statusMap: Record<number, string> = {
           0: '未开播',
-          1: '🟢 直播中',
-          2: '🔄 轮播中',
+          1: '直播中',
+          2: '轮播中',
         };
         const statusText = statusMap[liveStatus] || `未知状态(${liveStatus})`;
 
         const lines: string[] = [
-          `📺 直播间信息 (uid: ${uid})`,
-          `────────────────────────`,
+          `直播间信息 (uid: ${uid})`,
+          `────────────────`,
           `状态: ${statusText}`,
           `标题: ${title}`,
-          `房间 ID: ${roomId}`,
+          `房间 ID: ${roomId}` + (shortId ? ` (短号: ${shortId})` : ''),
           `分类: ${parentAreaName} / ${areaName}`,
-          `在线人数: ${formatCount(online)}`,
+          `人气值: ${formatCount(popularity)}`,
           `关注数: ${formatCount(attention)}`,
         ];
 
         if (liveTime && liveStatus !== 0) {
           lines.push(`开播时间: ${liveTime}`);
         }
-        if (description) {
-          lines.push(`简介: ${description.slice(0, 200)}`);
+        if (hotWords.length > 0) {
+          lines.push(`弹幕热词: ${hotWords.slice(0, 10).join(', ')}`);
         }
         if (tags) {
           lines.push(`标签: ${tags}`);
         }
-        if (coverUrl) {
-          lines.push(`封面: ${coverUrl}`);
+        if (description) {
+          lines.push(`简介: ${description.slice(0, 200)}`);
         }
         if (keyframeUrl && liveStatus !== 0) {
           lines.push(`关键帧: ${keyframeUrl}`);
+        }
+        if (coverUrl) {
+          lines.push(`封面: ${coverUrl}`);
         }
 
         return {
