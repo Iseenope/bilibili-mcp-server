@@ -73,21 +73,34 @@ export interface ParseResult {
   diagnostics: DanmakuDiagnostics;
 }
 
-/** 读取 varint，返回 [value, 消耗的字节数] */
+/** 读取 varint，返回 [value, 消耗的字节数]
+ *
+ * 注意：JS 的 << 运算符只使用 shift 的低 5 位（0-31），
+ * 所以当 shift >= 32 时必须用乘法代替。
+ * 支持最大 53 位整数（JS Number 精度上限）。
+ */
 function readVarint(bytes: Uint8Array, start: number): [number, number] {
   let value = 0;
   let shift = 0;
   let i = start;
   while (i < bytes.length) {
-    value |= (bytes[i] & 0x7f) << shift;
+    const byte = bytes[i];
+    if (shift < 32) {
+      // shift < 32 时用位运算（更快）
+      value |= (byte & 0x7f) << shift;
+    } else {
+      // shift >= 32 时必须用乘法，否则 << 会回绕
+      value += (byte & 0x7f) * (1 << 30) * (1 << (shift - 30));
+    }
     shift += 7;
-    if (!(bytes[i] & 0x80)) {
+    if (!(byte & 0x80)) {
       i++;
       break;
     }
     i++;
-    if (shift > 28) return [0, 0]; // overflow
+    if (shift > 56) return [0, 0]; // 超过 JS 精度，不会出现
   }
+  // value >>> 0 将负数（最高位为 1 的 int32）转为无符号
   return [value >>> 0, i - start];
 }
 

@@ -98,16 +98,15 @@ export function registerLiveTools(server: McpServer): void {
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        // B 站返回 -400 或 -404 表示用户不存在或无直播间
-        if (message.includes('-400') || message.includes('-404')) {
+        // B 站返回 -400 / -404 / 60004 表示用户不存在或无直播间
+        if (message.includes('-400') || message.includes('-404') || message.includes('60004')) {
           return {
             content: [
               {
                 type: 'text',
-                text: `未找到该用户的直播间信息（uid: ${uid}），请确认 uid 是否正确`,
+                text: `该用户（uid: ${uid}）未开通直播间`,
               },
             ],
-            isError: true,
           };
         }
         return {
