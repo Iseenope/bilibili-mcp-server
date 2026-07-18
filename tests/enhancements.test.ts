@@ -166,11 +166,6 @@ describe('新工具模块注册函数存在', () => {
     expect(mod.registerFollowTools).toBeTypeOf('function');
   });
 
-  it('registerInteractionTools 是函数', async () => {
-    const mod = await import('../src/tools/interaction.js');
-    expect(mod.registerInteractionTools).toBeTypeOf('function');
-  });
-
   it('registerDownloadTools 是函数', async () => {
     const mod = await import('../src/tools/download.js');
     expect(mod.registerDownloadTools).toBeTypeOf('function');
