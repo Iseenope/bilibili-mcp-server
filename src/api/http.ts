@@ -1,6 +1,19 @@
 // ─── 共享 HTTP 工具 ──────────────────────────────────────
 
 /**
+ * 代理 env 操作的互斥锁
+ *
+ * noProxyFetch 需要临时清除 process.env.HTTP_PROXY 等全局变量，
+ * 如果多个调用并发执行，一个调用的清除可能会干扰另一个调用的保存/恢复，
+ * 导致代理 env 最终状态不一致（代理丢失）。
+ *
+ * 方案：用 promise 链将所有操作串行化。
+ * 关键：在第一个 await 之前就设置 proxyLock = next，确保后续调用拿到的
+ * 是最新的锁，避免 TOCTOU 竞态。
+ */
+let proxyLock: Promise<void> = Promise.resolve();
+
+/**
  * 绕过代理发起请求
  * B站 API 必须直连，不能走系统代理
  */
@@ -8,6 +21,17 @@ export async function noProxyFetch(
   url: string,
   opts: RequestInit = {}
 ): Promise<Response> {
+  let release: () => void;
+
+  // 在第一个 await 之前链入新锁，确保不会有两个调用同时读取旧的 proxyLock
+  const prev = proxyLock;
+  proxyLock = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  // 等待前面的调用完成代理 env 操作
+  await prev;
+
   // 保存并清除代理环境变量
   const saved: Record<string, string | undefined> = {
     HTTP_PROXY: process.env.HTTP_PROXY,
@@ -25,8 +49,10 @@ export async function noProxyFetch(
   } finally {
     // 恢复代理
     for (const [key, val] of Object.entries(saved)) {
-      if (val) process.env[key] = val;
+      if (val !== undefined) process.env[key] = val;
     }
+    // 释放锁，允许下一个调用继续
+    release!();
   }
 }
 
