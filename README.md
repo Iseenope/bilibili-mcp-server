@@ -171,8 +171,6 @@ src/
 ## Development
 
 ```bash
-git clone https://github.com/Iseenope/bilibili-mcp-server
-cd bilibili-mcp-server
 npm install
 npm run dev
 npm run build

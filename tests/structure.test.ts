@@ -73,8 +73,8 @@ describe('项目结构完整性', () => {
     expect(pkg.default.bin).toHaveProperty('bilibili-mcp-server');
     expect(pkg.default.dependencies).toHaveProperty('@modelcontextprotocol/sdk');
     expect(pkg.default.dependencies).toHaveProperty('zod');
-    // Node 版本约束 - 必须包含 >= 18
-    expect(pkg.default.engines.node).toMatch(/>=18/);
+    // Node 版本约束 - 必须包含 >= 22
+    expect(pkg.default.engines.node).toMatch(/>=22/);
   });
 
   it('tsconfig.json 应启用 strict 模式', async () => {
