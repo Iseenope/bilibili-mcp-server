@@ -2,7 +2,7 @@
 
 [English](./README_en.md) | [中文](./README.md)
 
-Model Context Protocol server for Bilibili. Provides video search, comments, danmaku, subtitles, user info, articles, QR login, and more. 22 tools total.
+Model Context Protocol server for Bilibili. Provides video search, comments, danmaku, subtitles, user info, articles, QR login, live screenshot with vision analysis, and more. 31 tools total.
 
 ## Tools
 
@@ -11,12 +11,14 @@ Model Context Protocol server for Bilibili. Provides video search, comments, dan
 | Comments | `bilibili_reply`, `bilibili_delete_comment`, `bilibili_like_comment` | 3 |
 | Search | `bilibili_search`, `bilibili_search_hot` | 2 |
 | Video | `bilibili_video_info`, `bilibili_video_comments`, `bilibili_video_subtitle`, `bilibili_video_danmaku`, `bilibili_hot` | 5 |
-| User | `bilibili_user_info`, `bilibili_user_videos`, `bilibili_user_favorites` | 3 |
+| User | `bilibili_user_info`, `bilibili_user_videos`, `bilibili_user_favorites`, `bilibili_user_follow`, `bilibili_user_unfollow`, `bilibili_user_followings`, `bilibili_user_followers` | 7 |
 | Content | `bilibili_user_dynamics`, `bilibili_article_info`, `bilibili_user_articles` | 3 |
 | Message | `bilibili_detect_replies`, `bilibili_notifications` | 2 |
-| Live | `bilibili_live_info` | 1 |
+| Live | `bilibili_live_info`, `bilibili_live_screenshot` | 2 |
 | Login | `bilibili_login`, `bilibili_login_check` | 2 |
 | System | `bilibili_refresh_cookie` | 1 |
+| Download | `bilibili_video_download`, `bilibili_article_download`, `bilibili_download_list` | 3 |
+| Danmaku | `bilibili_send_danmaku` | 1 |
 
 ## Quick Start
 
@@ -24,6 +26,7 @@ Model Context Protocol server for Bilibili. Provides video search, comments, dan
 
 - Node.js 22+
 - A Bilibili account (for authenticated operations)
+- ffmpeg (**only** for video download tool; macOS: `brew install ffmpeg`, Windows: `choco install ffmpeg`, Linux: `apt install ffmpeg`)
 
 ### Installation
 
@@ -138,11 +141,43 @@ export BILIBILI_DETECT_FILE=/path/to/detect.json
 | `bilibili_detect_replies` | Detect new replies | `max?` |
 | `bilibili_notifications` | View unread notifications | - |
 
+### Follow Management
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `bilibili_user_follow` | Follow a user | `uid` |
+| `bilibili_user_unfollow` | Unfollow a user | `uid` |
+| `bilibili_user_followings` | List followed users | `uid`, `page?`, `pageSize?` |
+| `bilibili_user_followers` | List followers | `uid`, `page?`, `pageSize?` |
+
+> Follow/unfollow operations are subject to B 站 risk control. Avoid bulk operations in short periods.
+
+### Danmaku
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `bilibili_send_danmaku` | Send a danmaku | `videoId`, `cid`, `progress`, `message`, `color?`, `mode?` |
+
+> Danmaku sending is high-risk for account ban. Limit to ≤ 5 per day.
+
+### Download
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `bilibili_video_download` | Download video (requires ffmpeg) | `videoId`, `cid?`, `quality?`, `outputDir?` |
+| `bilibili_article_download` | Download article as Markdown | `cvid`, `outputDir?`, `downloadImages?` |
+| `bilibili_download_list` | List downloaded files | `outputDir?` |
+
+> Video download auto-merges DASH video+audio into mp4 via ffmpeg. Default output: `./bilibili-downloads/`.
+
 ### Live Streaming
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `bilibili_live_info` | Query live room info | `uid` |
+| `bilibili_live_screenshot` | Capture current live frame (vision analysis) | `uid` |
+
+> `bilibili_live_screenshot` returns the current keyframe as an image so vision-capable models can analyze the live content. Models without vision will only see text metadata.
 
 ## Architecture
 

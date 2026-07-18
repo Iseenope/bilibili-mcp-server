@@ -35,7 +35,6 @@ describe('项目结构完整性', () => {
       'src/tools/content.ts',
       'src/tools/live.ts',
       'src/tools/follow.ts',
-      'src/tools/interaction.ts',
       'src/tools/download.ts',
     ];
     for (const file of files) {
@@ -64,7 +63,6 @@ describe('项目结构完整性', () => {
       'dist/tools/content.js',
       'dist/tools/live.js',
       'dist/tools/follow.js',
-      'dist/tools/interaction.js',
       'dist/tools/download.js',
     ];
     for (const file of files) {
@@ -106,7 +104,6 @@ describe('工具注册完整性', () => {
     const content = await import('../src/tools/content.js');
     const live = await import('../src/tools/live.js');
     const follow = await import('../src/tools/follow.js');
-    const interaction = await import('../src/tools/interaction.js');
     const download = await import('../src/tools/download.js');
 
     expect(comment.registerCommentTools).toBeTypeOf('function');
@@ -117,7 +114,6 @@ describe('工具注册完整性', () => {
     expect(content.registerContentTools).toBeTypeOf('function');
     expect(live.registerLiveTools).toBeTypeOf('function');
     expect(follow.registerFollowTools).toBeTypeOf('function');
-    expect(interaction.registerInteractionTools).toBeTypeOf('function');
     expect(download.registerDownloadTools).toBeTypeOf('function');
   });
 

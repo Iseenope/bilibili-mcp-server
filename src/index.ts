@@ -13,7 +13,6 @@ import { registerLoginTools } from './tools/login.js';
 import { registerContentTools } from './tools/content.js';
 import { registerLiveTools } from './tools/live.js';
 import { registerFollowTools } from './tools/follow.js';
-import { registerInteractionTools } from './tools/interaction.js';
 import { registerDownloadTools } from './tools/download.js';
 
 // ─── 启动前加载 .env ─────────────────────────────────────
@@ -91,7 +90,6 @@ registerLoginTools(server);
 registerContentTools(server);
 registerLiveTools(server);
 registerFollowTools(server);
-registerInteractionTools(server);
 registerDownloadTools(server);
 
 // ─── 启动 ─────────────────────────────────────────────────
