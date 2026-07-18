@@ -290,12 +290,19 @@ export function registerVideoTools(server: McpServer): void {
 
         if (danmakuTexts.length === 0) {
           // 区分是"真无弹幕"还是"解析失败"
-          const hint =
-            diagnostics.foundContentTags === 0
-              ? diagnostics.bufferSize < 10
+          let hint: string;
+          if (diagnostics.warning) {
+            // 有明确告警（schema 变更等）
+            hint = `⚠️ ${diagnostics.warning}`;
+          } else if (diagnostics.withContent === 0) {
+            hint =
+              diagnostics.bufferSize < 10
                 ? '（该分段可能没有弹幕）'
-                : `⚠️ 未识别到弹幕数据。buffer=${diagnostics.bufferSize} 字节`
-              : `⚠️ 解析异常: 找到 ${diagnostics.foundContentTags} 个内容标签但都解析失败`;
+                : `⚠️ 未识别到弹幕数据。buffer=${diagnostics.bufferSize} 字节，` +
+                  `外层 Elems=${diagnostics.outerElemsFound}`;
+          } else {
+            hint = `⚠️ 解析异常: ${diagnostics.outerElemsFound} 个 elem 中找到 ${diagnostics.withContent} 个内容但结果为空`;
+          }
           return {
             content: [{ type: 'text', text: `该分段没有弹幕 ${hint}` }],
           };
