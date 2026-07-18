@@ -87,6 +87,23 @@ export function registerVideoTools(server: McpServer): void {
           duration: params.duration,
         });
 
+        const formatNum = (n: unknown): string => {
+          const v = Number(n) || 0;
+          if (v >= 10000) return (v / 10000).toFixed(1) + '万';
+          return String(v);
+        };
+
+        const formatPub = (ts: unknown): string => {
+          const t = Number(ts) || 0;
+          if (t === 0) return '';
+          const d = new Date(t * 1000);
+          const now = Date.now();
+          const days = Math.floor((now - t * 1000) / 86400000);
+          if (days < 1) return '今天';
+          if (days < 7) return `${days}天前`;
+          return d.toLocaleDateString('zh-CN');
+        };
+
         const results = (data.result || []) as Array<Record<string, unknown>>;
         if (results.length === 0) {
           return {
@@ -95,16 +112,34 @@ export function registerVideoTools(server: McpServer): void {
         }
 
         const lines = results.map((v: Record<string, unknown>, i: number) => {
+          const title = (v.title as string || '').replace(/<[^>]+>/g, '');
+          const author = v.author || '?';
+          const mid = v.mid || '?';
+          const typename = v.typename || v.cate_name || '';
           const duration = v.duration || '';
-          const play = v.play ? ` ${v.play}播放` : '';
-          return `${i + 1}. [${v.bvid}] ${v.title || '?'}${play} ${duration}`;
+          const play = formatNum(v.play);
+          const danmaku = formatNum(v.danmaku || v.video_review);
+          const favorite = formatNum(v.favorites);
+          const like = formatNum(v.like);
+          const pub = formatPub(v.pubdate);
+          const tag = v.tag || '';
+          const isPay = v.is_pay === 1 || v.is_charge_video === 1 ? ' [付费]' : '';
+          const isLive = v.is_live_room_inline === 1 ? ' [直播]' : '';
+
+          const authorLine = `   UP主: ${author} (uid:${mid})`;
+          const stat = `▶${play}  💬${danmaku}  👍${like}  ⭐${favorite}`;
+          const meta = `   ${typename} · ${duration} · ${pub}${isPay}${isLive}`;
+
+          return `${i + 1}. ${title}${isPay}${isLive}\n${authorLine}\n${meta}\n   ${stat}${tag ? '\n   标签: ' + tag : ''}`;
         });
+
+        const header = `🔍 搜索"${params.keyword}"结果（共 ${data.numResults} 条，第 ${params.page ?? 1}/${data.numPages} 页）\n${'─'.repeat(40)}`;
 
         return {
           content: [
             {
               type: 'text',
-              text: `🔍 搜索"${params.keyword}"结果（第${params.page ?? 1}页）:\n${lines.join('\n')}`,
+              text: `${header}\n${lines.join('\n\n')}`,
             },
           ],
         };
@@ -133,25 +168,81 @@ export function registerVideoTools(server: McpServer): void {
         const data = await biliApi.videoInfo(params.videoId);
         const stat = (data.stat as Record<string, unknown>) || {};
         const owner = (data.owner as Record<string, unknown>) || {};
+        const rights = (data.rights as Record<string, unknown>) || {};
+        const dimension = (data.dimension as Record<string, unknown>) || {};
+        const honorReply = (data.honor_reply as Record<string, unknown>) || {};
+        const honorList = (honorReply.honor as Array<Record<string, unknown>>) || [];
 
-        const lines = [
-          `📺 ${data.title || '?'}`,
-          `UP主: ${owner.name || '?'} (uid:${owner.mid || '?'})`,
-          `简介: ${(data.desc as string) || '(无)'}`,
-          '',
-          `📊 数据统计:`,
-          `  播放: ${stat.view || 0}`,
-          `  弹幕: ${stat.danmaku || 0}`,
-          `  评论: ${stat.reply || 0}`,
-          `  点赞: ${stat.like || 0}`,
-          `  投币: ${stat.coin || 0}`,
-          `  收藏: ${stat.favorite || 0}`,
-          `  分享: ${stat.share || 0}`,
-          '',
-          `🆔 ${data.bvid || '?'}`,
-          `⏱ ${Math.floor((data.duration as number) / 60)}:${String((data.duration as number) % 60).padStart(2, '0')}`,
-          `📅 ${new Date((data.pubdate as number) * 1000).toLocaleDateString('zh-CN')}`,
+        const duration = (data.duration as number) || 0;
+        const formatDur = (s: number) => {
+          const h = Math.floor(s / 3600);
+          const m = Math.floor((s % 3600) / 60);
+          const sec = s % 60;
+          return h > 0
+            ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+            : `${m}:${String(sec).padStart(2, '0')}`;
+        };
+
+        const copyrightMap: Record<number, string> = { 1: '自制', 2: '转载' };
+        const copyrightText = copyrightMap[data.copyright as number] ||
+                              (data.copyright === 3 ? '不识别' : '未知');
+
+        const formatNum = (n: unknown) => {
+          const v = Number(n) || 0;
+          if (v >= 10000) return (v / 10000).toFixed(1) + '万';
+          return String(v);
+        };
+
+        const pubdateTs = (data.pubdate as number) * 1000;
+        const ctimeTs = (data.ctime as number) * 1000;
+
+        const rightsFlags: string[] = [];
+        if (rights.no_reprint === 1) rightsFlags.push('禁止转载');
+        if (rights.is_cooperation === 1) rightsFlags.push('联合创作');
+        if (rights.ugc_pay === 1 || rights.arc_pay === 1) rightsFlags.push('付费');
+        if (rights.download === 1) rightsFlags.push('可下载');
+        if (rights.hd5 === 1) rightsFlags.push('高清');
+
+        const lines: string[] = [
+          `${data.title || '?'}`,
+          `────────────────`,
+          `UP主: ${owner.name || '?'} (uid: ${owner.mid || '?'})`,
+          `分区: ${data.tname_v2 || data.tname || '?'}`,
+          `类型: ${copyrightText}` + (rightsFlags.length ? `  标签: ${rightsFlags.join('、')}` : ''),
+          `时长: ${formatDur(duration)}` +
+            (dimension.width ? `  分辨率: ${dimension.width}×${dimension.height}` : ''),
+          `分P数: ${data.videos || 1}`,
+          `发布时间: ${new Date(pubdateTs).toLocaleString('zh-CN')}`,
+          `创建时间: ${new Date(ctimeTs).toLocaleString('zh-CN')}`,
+          `状态: ${data.state === 0 ? '正常' : data.state === -4 ? '审核中' : `状态码${data.state}`}`,
+          ``,
+          `数据统计:`,
+          `  播放: ${formatNum(stat.view)}  弹幕: ${formatNum(stat.danmaku)}  评论: ${formatNum(stat.reply)}`,
+          `  点赞: ${formatNum(stat.like)}  投币: ${formatNum(stat.coin)}  收藏: ${formatNum(stat.favorite)}  分享: ${formatNum(stat.share)}`,
         ];
+
+        if (typeof stat.now_rank === 'number' && stat.now_rank > 0) {
+          lines.push(`  当前全站排名: ${stat.now_rank}`);
+        }
+        if (typeof stat.his_rank === 'number' && stat.his_rank > 0) {
+          lines.push(`  历史最高排名: ${stat.his_rank}`);
+        }
+
+        if (honorList.length > 0) {
+          const honors = honorList
+            .map(h => h.desc)
+            .filter(Boolean)
+            .join('、');
+          if (honors) lines.push(`荣誉: ${honors}`);
+        }
+
+        if (data.pic) lines.push(``, `封面: ${data.pic}`);
+        if (data.desc) {
+          const desc = (data.desc as string).trim();
+          if (desc) lines.push(``, `简介: ${desc}`);
+        }
+
+        lines.push(``, `BV号: ${data.bvid || '?'}  aid: ${data.aid || '?'}`);
 
         return {
           content: [{ type: 'text', text: lines.join('\n') }],
@@ -159,7 +250,7 @@ export function registerVideoTools(server: McpServer): void {
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 获取视频详情失败: ${(err as Error).message}` },
+            { type: 'text', text: `获取视频详情失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -358,27 +449,41 @@ export function registerVideoTools(server: McpServer): void {
           };
         }
 
+        const f = (n: unknown) => {
+          const v = Number(n) || 0;
+          if (v >= 10000) return (v / 10000).toFixed(1) + '万';
+          return String(v);
+        };
+
         const lines = list.map((v: Record<string, unknown>, i: number) => {
           const owner = (v.owner as Record<string, unknown>) || {};
           const stat = (v.stat as Record<string, unknown>) || {};
-          return (
-            `${i + 1}. ${v.title || '?'}\n` +
-            `   UP主: ${owner.name || '?'} | 播放: ${stat.view || 0} 👍${stat.like || 0}`
-          );
+          const duration = (v.duration as number) || 0;
+          const dur = duration > 0
+            ? `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`
+            : '?';
+          const isPay = (v.ugc_pay === 1 || v.arc_pay === 1) ? ' [付费]' : '';
+          return [
+            `${i + 1}. ${v.title || '?'}${isPay}`,
+            `   UP主: ${owner.name || '?'} (uid:${owner.mid || '?'})`,
+            `   分区: ${v.tname || '?'}  时长: ${dur}`,
+            `   ▶${f(stat.view)}  💬${f(stat.danmaku)}  👍${f(stat.like)}  ⭐${f(stat.favorite)}  🪙${f(stat.coin)}  🔁${f(stat.share)}`,
+            typeof stat.his_rank === 'number' && stat.his_rank > 0 ? `   历史最高排名: ${stat.his_rank}` : '',
+          ].filter(Boolean).join('\n');
         });
 
         return {
           content: [
             {
               type: 'text',
-              text: `🔥 B站热门视频（第${params.page ?? 1}页）:\n${lines.join('\n')}`,
+              text: `🔥 B站热门视频（第${params.page ?? 1}页）:\n${'─'.repeat(40)}\n${lines.join('\n\n')}`,
             },
           ],
         };
       } catch (err) {
         return {
           content: [
-            { type: 'text', text: `❌ 获取热门视频失败: ${(err as Error).message}` },
+            { type: 'text', text: `获取热门视频失败: ${(err as Error).message}` },
           ],
           isError: true,
         };
@@ -395,8 +500,10 @@ export function registerVideoTools(server: McpServer): void {
     },
     async () => {
       try {
-        const data = await biliApi.searchHot();
-        const list = (data.list || []) as Array<Record<string, unknown>>;
+        const data = biliApi.searchHot() as unknown as { trending?: { title?: string; list?: Array<Record<string, unknown>> } };
+        // 实际结构是 data.trending.list
+        const trending = data.trending || {};
+        const list = trending.list || [];
 
         if (list.length === 0) {
           return {
@@ -404,14 +511,21 @@ export function registerVideoTools(server: McpServer): void {
           };
         }
 
-        const lines = list.map(
-          (item: Record<string, unknown>, i: number) =>
-            `${i + 1}. ${item.keyword || '?'}`
-        );
+        const f = (n: unknown) => {
+          const v = Number(n) || 0;
+          if (v >= 10000) return (v / 10000).toFixed(1) + '万';
+          return String(v);
+        };
 
+        const lines = list.map((item: Record<string, unknown>, i: number) => {
+          const heat = item.heat_score ? `  热度 ${f(item.heat_score)}` : '';
+          return `${i + 1}. ${item.show_name || item.keyword || '?'}${heat}`;
+        });
+
+        const header = trending.title ? `【${trending.title}】\n` : '';
         return {
           content: [
-            { type: 'text', text: `🔥 B站热搜:\n${lines.join('\n')}` },
+            { type: 'text', text: `🔥 B站热搜\n${header}${lines.join('\n')}` },
           ],
         };
       } catch (err) {
