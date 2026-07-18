@@ -173,6 +173,8 @@ src/
 ## 开发
 
 ```bash
+git clone https://github.com/Iseenope/bilibili-mcp-server
+cd bilibili-mcp-server
 npm install
 npm run dev    # 开发模式
 npm run build  # 构建

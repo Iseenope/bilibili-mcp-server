@@ -1,6 +1,6 @@
 {
   "name": "bilibili-mcp-server",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Bilibili MCP Server — B站 API 的 MCP 服务封装，支持评论管理、视频搜索、弹幕字幕获取、Cookie 自动刷新等",
   "type": "module",
   "main": "dist/index.js",
